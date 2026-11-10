@@ -409,7 +409,9 @@ async function themeIcons([bg, paper, , ink, , title]) {
       padding: 8px max(12px, calc(50vw - 280px)) max(8px, env(safe-area-inset-bottom));
       background: var(--paper-deep);
       border-top: 2px solid var(--ink);
+      transition: opacity .2s var(--press);
     }
+    body:has(textarea:focus) .tools.moving { opacity: 0; pointer-events: none; transition: none; }
     body:has(textarea:focus) #mode { display: inline-flex; margin-left: 4px; }
     body:has(textarea:focus) .toast {
       position: fixed;
@@ -676,20 +678,41 @@ undoBtn.addEventListener('click', () => {
 });
 
 const modeBtn = document.getElementById('mode');
+function setStyling(on) {
+  t.readOnly = on;
+  modeBtn.querySelector('use').setAttribute('href', on ? '#i-edit' : '#i-kb-hide');
+  modeBtn.setAttribute('aria-label', on ? 'Type again' : 'Hide keyboard');
+}
+t.addEventListener('blur', () => setStyling(false));
 modeBtn.addEventListener('click', () => {
+  if (t.readOnly) {
+    t.blur();
+    return say('Tap the text where you want to type.');
+  }
   const { selectionStart: a, selectionEnd: z } = t;
-  t.readOnly = !t.readOnly;
   t.blur();
+  setStyling(true);
   t.focus({ preventScroll: true });
   t.setSelectionRange(a, z);
-  modeBtn.querySelector('use').setAttribute('href', t.readOnly ? '#i-edit' : '#i-kb-hide');
-  modeBtn.setAttribute('aria-label', t.readOnly ? 'Edit text' : 'Hide keyboard');
 });
 
 const vv = window.visualViewport;
-const dockToKeyboard = () => document.documentElement.style.setProperty('--kb', Math.max(0, innerHeight - vv.height - vv.offsetTop) + 'px');
+// ponytail: fixed lift for the iOS form accessory bar that visualViewport does not report; retune if a new iOS changes its height
+const KB_ACCESSORY = 24;
+const dockToKeyboard = () => {
+  const kb = innerHeight - vv.height - vv.offsetTop;
+  document.documentElement.style.setProperty('--kb', (kb > 50 ? kb + KB_ACCESSORY : 0) + 'px');
+};
 vv?.addEventListener('resize', dockToKeyboard);
-vv?.addEventListener('scroll', dockToKeyboard);
+const tools = document.querySelector('.tools');
+vv?.addEventListener('scroll', () => {
+  tools.classList.add('moving');
+  clearTimeout(tools.timer);
+  tools.timer = setTimeout(() => {
+    dockToKeyboard();
+    tools.classList.remove('moving');
+  }, 150);
+});
 if (vv) ['focus', 'blur'].forEach(type => t.addEventListener(type, dockToKeyboard)), dockToKeyboard();
 
 copyBtn.addEventListener('click', async () => {

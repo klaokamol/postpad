@@ -340,10 +340,7 @@ async function themeIcons([bg, paper, , ink, , title]) {
   .key:focus-visible { outline: 2px dotted var(--ink); outline-offset: -7px; }
   .tools { display: flex; gap: 8px; padding: 14px 14px 4px; }
   .tools .key { flex: 1; min-height: 48px; padding: 0; font-size: 20px; }
-  .tools .key[data-style="plain"] { flex: 2.2; font-size: 15px; }
-  body:has(textarea[readonly]) .tools { gap: 6px; }
-  body:has(textarea[readonly]) .tools .key[data-style="plain"] { flex: 1.6; }
-  body:has(textarea[readonly]) .tools .key[data-style="plain"] .ico { display: none; }
+  .tools .ico { width: 20px; height: 20px; }
   textarea {
     display: block;
     flex: 1;
@@ -403,7 +400,10 @@ async function themeIcons([bg, paper, , ink, , title]) {
     padding: 14px 0 calc(16px + env(safe-area-inset-bottom));
   }
   #type { display: none; }
-  @media (pointer: coarse) { body:has(textarea:focus) :is(.note, .dock, .foot) { display: none; } }
+  @media (pointer: coarse) {
+    body:has(textarea:focus) :is(.note, .foot, #copy) { display: none; }
+    body:has(textarea:focus) .dock { padding: 12px 0 0; }
+  }
   body:has(textarea[readonly]) #type { display: inline-flex; margin-left: 4px; }
   #copy {
     width: 100%;
@@ -447,7 +447,7 @@ async function themeIcons([bg, paper, , ink, , title]) {
     <button class="key" data-style="i" disabled aria-label="Italic" aria-pressed="false"><i>I</i></button>
     <button class="key" data-style="s" disabled aria-label="Strikethrough" aria-pressed="false"><s>S</s></button>
     <button class="key" data-style="u" disabled aria-label="Underline" aria-pressed="false"><u>U</u></button>
-    <button class="key" data-style="plain" disabled aria-label="Remove formatting"><svg class="ico"><use href="#i-plain"/></svg>Plain</button>
+    <button class="key" data-style="plain" disabled aria-label="Remove formatting"><svg class="ico"><use href="#i-plain"/></svg></button>
     <button class="key" id="type" aria-label="Type"><svg class="ico"><use href="#i-edit"/></svg></button>
   </div>
   <textarea id="t" aria-label="Post text" placeholder="Type or paste your post, then select text to style it"></textarea>
@@ -593,7 +593,10 @@ t.addEventListener('input', () => {
 });
 document.addEventListener('selectionchange', sync);
 ['select', 'keyup', 'pointerup', 'focus', 'blur'].forEach(type => t.addEventListener(type, sync));
-document.addEventListener('pointerdown', unsay);
+document.addEventListener('pointerdown', e => {
+  unsay();
+  if (t.readOnly && !e.target.closest('button, textarea')) t.setSelectionRange(t.selectionEnd, t.selectionEnd);
+});
 document.querySelectorAll('button').forEach(btn => btn.addEventListener('mousedown', e => e.preventDefault()));
 
 styleBtns.forEach(btn => {

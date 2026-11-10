@@ -595,7 +595,10 @@ document.addEventListener('selectionchange', sync);
 ['select', 'keyup', 'pointerup', 'focus', 'blur'].forEach(type => t.addEventListener(type, sync));
 document.addEventListener('pointerdown', e => {
   unsay();
-  if (t.readOnly && !e.target.closest('button, textarea')) t.setSelectionRange(t.selectionEnd, t.selectionEnd);
+  if (t.readOnly && !e.target.closest('button, textarea')) {
+    t.setSelectionRange(t.selectionEnd, t.selectionEnd);
+    sync();
+  }
 });
 document.querySelectorAll('button').forEach(btn => btn.addEventListener('mousedown', e => e.preventDefault()));
 
@@ -659,8 +662,20 @@ vv?.addEventListener('resize', fitViewport);
 vv?.addEventListener('scroll', fitViewport);
 
 if (matchMedia('(pointer: coarse)').matches) {
-  t.addEventListener('blur', () => { if (t.value) t.readOnly = true; });
-  t.addEventListener('focus', () => { if (t.readOnly) t.blur(); });
+  const dropSelection = () => {
+    t.setSelectionRange(t.selectionEnd, t.selectionEnd);
+    sync();
+  };
+  t.addEventListener('blur', () => {
+    if (!t.value || t.readOnly) return;
+    t.readOnly = true;
+    dropSelection();
+  });
+  t.addEventListener('focus', () => {
+    if (!t.readOnly) return;
+    t.blur();
+    dropSelection();
+  });
   document.getElementById('type').addEventListener('click', () => {
     t.readOnly = false;
     t.focus();

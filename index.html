@@ -310,7 +310,7 @@ async function themeIcons([bg, paper, , ink, , title]) {
     background: var(--paper);
     border: 2px solid var(--ink);
     border-radius: 12px;
-    box-shadow: 5px 5px 0 var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
     overflow: hidden;
   }
   .title {
@@ -343,9 +343,9 @@ async function themeIcons([bg, paper, , ink, , title]) {
   }
   .key:active:not(:disabled), .key[aria-pressed="true"] { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
   .key[aria-pressed="true"] { background: var(--accent); }
-  .key:disabled { border-style: dashed; box-shadow: none; color: var(--ink-soft); cursor: default; }
+  .key:disabled { border-style: dashed; box-shadow: 3px 3px 0 color-mix(in srgb, var(--ink) 18%, transparent); color: var(--ink-soft); cursor: default; }
   .key:focus-visible { outline: 2px dotted var(--ink); outline-offset: -7px; }
-  .tools { display: flex; gap: 8px; padding: 14px 14px 4px; }
+  .tools { display: flex; gap: 6px; padding: 14px 14px 4px; }
   .tools .key { flex: 1; min-height: 48px; padding: 0; font-size: 20px; }
   .tools .ico { width: 20px; height: 20px; }
   textarea {
@@ -373,12 +373,12 @@ async function themeIcons([bg, paper, , ink, , title]) {
   }
   .foot {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     padding: 12px 14px 14px;
     background: var(--paper-deep);
     border-top: 2px solid var(--ink);
   }
-  .foot .key { flex: 1; flex-direction: column; gap: 3px; min-height: 52px; padding: 6px 2px; font-size: 13px; }
+  .foot .key { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 3px; min-height: 52px; padding: 6px 4px; font-size: min(13px, 3.2vw); }
   .toast {
     margin: 0 0 12px;
     padding: 8px 12px;
@@ -400,8 +400,25 @@ async function themeIcons([bg, paper, , ink, , title]) {
   @media (pointer: coarse) {
     body:has(textarea:focus) :is(.foot, #copy) { display: none; }
     body:has(textarea:focus) .dock { padding: 12px 0 0; }
+    #type { display: inline-flex; }
   }
-  body:has(textarea[readonly]) #type { display: inline-flex; margin-left: 4px; }
+  @media (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+    .foot { animation: drawer .2s cubic-bezier(.2, .8, .2, 1) backwards; }
+    .foot .key, #copy { animation: pop .32s linear backwards; will-change: translate, opacity; }
+    .foot .key:nth-child(1) { animation-delay: 80ms; }
+    .foot .key:nth-child(2) { animation-delay: 100ms; }
+    .foot .key:nth-child(3) { animation-delay: 120ms; }
+    .foot .key:nth-child(4) { animation-delay: 140ms; }
+    .foot .key:nth-child(5) { animation-delay: 160ms; }
+    #copy { animation-delay: 180ms; }
+    body.kb-hiding .foot { translate: 0 100%; animation: none; will-change: translate; }
+    body.kb-hiding :is(.foot .key, #copy) { visibility: hidden; animation: none; }
+  }
+  @keyframes drawer { from { translate: 0 100%; } }
+  @keyframes pop {
+    from { opacity: 0; translate: 3px 3px; box-shadow: 0 0 0 var(--ink); animation-timing-function: ease-out; }
+    25% { opacity: 1; translate: 3px 3px; box-shadow: 0 0 0 var(--ink); animation-timing-function: cubic-bezier(.3, 0, .2, 1); }
+  }
   #copy {
     width: 100%;
     min-height: 54px;
@@ -409,19 +426,18 @@ async function themeIcons([bg, paper, , ink, , title]) {
     background: var(--accent);
     font-size: 17px;
     border-radius: 10px;
-    box-shadow: 4px 4px 0 var(--ink);
   }
   #copy .ico { width: 20px; height: 20px; }
-  #copy:active:not(:disabled) { transform: translate(4px, 4px); }
-  #copy:disabled { background: var(--paper-deep); box-shadow: none; }
+  #copy:disabled { background: var(--paper-deep); }
   #copy.done { background: var(--paper); }
-  @media (orientation: landscape) and (max-height: 500px) {
+  @media (orientation: landscape) and (max-height: 500px) and (min-width: 560px) {
     body { display: grid; grid-template: 1fr / 1fr 216px; padding: 8px max(16px, env(safe-area-inset-right)) 14px max(16px, env(safe-area-inset-left)); }
     .win { grid-column: 1 / -1; grid-row: 1; max-width: none; display: grid; grid-template: auto auto 1fr / 1fr 216px; }
     .title { grid-column: 1 / -1; }
     .tools { grid-area: 2 / 1; }
     textarea { grid-area: 3 / 1; }
     .foot { grid-area: 2 / 2 / 4 / 3; display: grid; grid-template-columns: 1fr 1fr; align-content: start; border-top: 0; border-left: 2px solid var(--ink); }
+    .foot #snippet { grid-column: 1 / -1; }
     .dock { display: contents; }
     .toast, #copy { grid-row: 1; z-index: 1; align-self: end; width: auto; margin: 0 14px 14px; }
     .toast { grid-column: 1; margin-right: 16px; }
@@ -448,6 +464,7 @@ async function themeIcons([bg, paper, , ink, , title]) {
   <symbol id="i-spacing" viewBox="0 0 24 24"><path d="M3 8l3 -3l3 3"/><path d="M3 16l3 3l3 -3"/><path d="M6 5l0 14"/><path d="M13 6l7 0"/><path d="M13 12l7 0"/><path d="M13 18l7 0"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-snippet" viewBox="0 0 24 24"><path d="M18 7v14l-6 -4l-6 4v-14a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4z"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5l10 -10"/></symbol>
 </svg>
 <main class="win">
@@ -461,14 +478,15 @@ async function themeIcons([bg, paper, , ink, , title]) {
     <button class="key" data-style="s" disabled aria-label="Strikethrough" aria-pressed="false"><s>S</s></button>
     <button class="key" data-style="u" disabled aria-label="Underline" aria-pressed="false"><u>U</u></button>
     <button class="key" data-style="plain" disabled aria-label="Remove formatting"><svg class="ico"><use href="#i-plain"/></svg></button>
-    <button class="key" id="type" aria-label="Edit text"><svg class="ico"><use href="#i-edit"/></svg></button>
+    <button class="key" id="type" aria-label="Edit text" aria-pressed="false"><svg class="ico"><use href="#i-edit"/></svg></button>
   </div>
   <textarea id="t" aria-label="Post text" placeholder="Type or paste your post, then select text to style it"></textarea>
   <div class="foot">
     <button class="key" id="paste"><svg class="ico"><use href="#i-paste"/></svg>Paste</button>
     <button class="key" id="clear" disabled><svg class="ico"><use href="#i-clear"/></svg>Clear</button>
     <button class="key" id="undo" disabled><svg class="ico"><use href="#i-undo"/></svg>Undo</button>
-    <button class="key" id="spacing" disabled aria-label="Double spacing" aria-pressed="false"><svg class="ico"><use href="#i-spacing"/></svg>Spacing</button>
+    <button class="key" id="spacing" disabled aria-label="Double spacing" aria-pressed="false"><svg class="ico"><use href="#i-spacing"/></svg>Lines</button>
+    <button class="key" id="snippet" aria-label="Saved snippet"><svg class="ico"><use href="#i-snippet"/></svg>Saved</button>
   </div>
 </main>
 <div class="dock">
@@ -560,6 +578,9 @@ const undoBtn = document.getElementById('undo');
 const clearBtn = document.getElementById('clear');
 const spacingBtn = document.getElementById('spacing');
 const copyBtn = document.getElementById('copy');
+const snippetBtn = document.getElementById('snippet');
+let snippet = '';
+try { snippet = localStorage.getItem('snippet') || ''; } catch {}
 const undoStack = [];
 let saved = '';
 let typing = false;
@@ -576,6 +597,10 @@ function unsay() {
   toast.hidden = true;
 }
 
+function selected() {
+  return (document.activeElement === t || t.readOnly) && t.selectionStart !== t.selectionEnd ? t.value.slice(t.selectionStart, t.selectionEnd) : '';
+}
+
 function sync() {
   const { count, isDouble } = spacingOf(t.value);
   const chars = [...graphemes.segment(t.value)].length;
@@ -584,7 +609,8 @@ function sync() {
   spacingBtn.disabled = count < 2;
   spacingBtn.setAttribute('aria-pressed', isDouble);
   undoBtn.disabled = !undoStack.length;
-  const sel = (document.activeElement === t || t.readOnly) && t.selectionStart !== t.selectionEnd ? t.value.slice(t.selectionStart, t.selectionEnd) : '';
+  document.getElementById('type').setAttribute('aria-pressed', document.activeElement === t && !t.readOnly);
+  const sel = selected();
   styleBtns.forEach(btn => {
     btn.disabled = !sel;
     if (btn.dataset.style !== 'plain') btn.setAttribute('aria-pressed', !!sel && isOn(sel, btn.dataset.style));
@@ -671,6 +697,23 @@ spacingBtn.addEventListener('click', () => {
   save();
 });
 
+snippetBtn.addEventListener('click', () => {
+  const sel = selected();
+  if (sel) {
+    if (sel === snippet) return say('This is already your snippet.');
+    snippet = sel;
+    try { localStorage.setItem('snippet', snippet); } catch {}
+    return say('Saved as your snippet. Press Saved with nothing selected to add it to the end of a post.');
+  }
+  if (!snippet) return say('No snippet yet. Select text you reuse, like delivery and pickup details, then press Saved to keep it.', snippetBtn);
+  snapshot();
+  const body = t.value.trimEnd();
+  t.value = body ? body + '\n\n' + snippet : snippet;
+  t.setSelectionRange(t.value.length, t.value.length);
+  t.scrollTop = t.scrollHeight;
+  save();
+});
+
 undoBtn.addEventListener('click', () => {
   t.value = undoStack.pop();
   typing = false;
@@ -721,6 +764,7 @@ if (matchMedia('(pointer: coarse)').matches) {
     fitViewport.timer = setTimeout(() => {
       document.body.classList.remove('kb-closing');
       fitViewport();
+      reveal();
     }, 700);
   });
   const dropSelection = () => {
@@ -734,7 +778,29 @@ if (matchMedia('(pointer: coarse)').matches) {
   });
   t.readOnly = !!t.value;
   sync();
+  const reveal = () => {
+    if (!document.body.classList.contains('kb-hiding') || reveal.pending) return;
+    reveal.pending = true;
+    clearTimeout(fitViewport.timer);
+    document.body.classList.remove('kb-closing');
+    fitViewport();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      reveal.pending = false;
+      document.body.classList.remove('kb-hiding');
+    }));
+  };
+  t.addEventListener('blur', () => {
+    const rest = restHeights[Math.round(vv.width)];
+    if (!rest || vv.scale > 1.01 || vv.height > rest - 100) return;
+    reveal.rest = rest;
+    document.body.classList.add('kb-hiding');
+  });
+  vv.addEventListener('resize', () => {
+    clearTimeout(reveal.settle);
+    if (document.activeElement !== t && vv.height >= reveal.rest - 4) reveal.settle = setTimeout(reveal, 80);
+  });
   t.addEventListener('focus', () => {
+    document.body.classList.remove('kb-hiding');
     document.body.classList.remove('kb-closing');
     if (!t.readOnly) return;
     t.blur();
@@ -744,6 +810,7 @@ if (matchMedia('(pointer: coarse)').matches) {
   keyboardHandoff.style.cssText = 'position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; font-size: 16px; border: 0; padding: 0';
   document.body.append(keyboardHandoff);
   document.getElementById('type').addEventListener('click', () => {
+    if (document.activeElement === t && !t.readOnly) return t.blur();
     const caretBottom = caretBottomAt(t.selectionEnd);
     keyboardHandoff.focus();
     t.readOnly = false;

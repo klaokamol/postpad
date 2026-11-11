@@ -290,6 +290,9 @@ async function themeIcons([bg, paper, , ink, , title]) {
     font: 16px/1.5 var(--text);
     -webkit-tap-highlight-color: transparent;
   }
+  @media (prefers-reduced-motion: no-preference) {
+    body.kb-closing { transition: transform .4s cubic-bezier(.25, .8, .25, 1); }
+  }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .win {
@@ -660,17 +663,51 @@ undoBtn.addEventListener('click', () => {
 });
 
 const vv = window.visualViewport;
+const restHeights = {};
+const setHeight = h => {
+  document.body.style.height = h + 'px';
+  document.body.classList.toggle('cramped', h < 240);
+};
 const fitViewport = () => {
   if (vv.scale > 1.01) return;
-  document.body.style.height = vv.height + 'px';
+  setHeight(vv.height);
   document.body.style.transform = vv.offsetTop ? `translateY(${vv.offsetTop}px)` : '';
-  document.body.classList.toggle('cramped', vv.height < 240);
+  if (document.activeElement !== t) restHeights[Math.round(vv.width)] = vv.height;
 };
-vv?.addEventListener('resize', fitViewport);
+const caretBottomAt = end => {
+  const probe = Object.assign(t.cloneNode(), { id: '', value: t.value.slice(0, end) });
+  probe.style.cssText = `position: absolute; visibility: hidden; height: 0; width: ${t.offsetWidth}px`;
+  t.after(probe);
+  const bottom = probe.scrollHeight;
+  probe.remove();
+  return bottom;
+};
+const revealCaret = () => {
+  const caretBottom = caretBottomAt(t.selectionEnd);
+  if (caretBottom > t.scrollTop + t.clientHeight) t.scrollTop = caretBottom - t.clientHeight;
+};
+vv?.addEventListener('resize', () => {
+  t.style.paddingBottom = '';
+  fitViewport();
+  if (document.activeElement === t) revealCaret();
+});
 vv?.addEventListener('scroll', fitViewport);
 vv && fitViewport();
 
 if (matchMedia('(pointer: coarse)').matches) {
+  t.addEventListener('blur', () => {
+    t.style.paddingBottom = '';
+    const rest = restHeights[Math.round(vv.width)];
+    if (!rest || vv.scale > 1.01) return;
+    document.body.classList.add('kb-closing');
+    setHeight(rest);
+    document.body.style.transform = '';
+    clearTimeout(fitViewport.timer);
+    fitViewport.timer = setTimeout(() => {
+      document.body.classList.remove('kb-closing');
+      fitViewport();
+    }, 700);
+  });
   const dropSelection = () => {
     t.setSelectionRange(t.selectionEnd, t.selectionEnd);
     sync();
@@ -683,6 +720,7 @@ if (matchMedia('(pointer: coarse)').matches) {
   t.readOnly = !!t.value;
   sync();
   t.addEventListener('focus', () => {
+    document.body.classList.remove('kb-closing');
     if (!t.readOnly) return;
     t.blur();
     dropSelection();
@@ -691,8 +729,11 @@ if (matchMedia('(pointer: coarse)').matches) {
   keyboardHandoff.style.cssText = 'position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; font-size: 16px; border: 0; padding: 0';
   document.body.append(keyboardHandoff);
   document.getElementById('type').addEventListener('click', () => {
+    const caretBottom = caretBottomAt(t.selectionEnd);
     keyboardHandoff.focus();
     t.readOnly = false;
+    t.style.paddingBottom = t.clientHeight + 'px';
+    t.scrollTop = caretBottom - 60;
     t.focus();
   });
 }

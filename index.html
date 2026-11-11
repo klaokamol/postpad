@@ -277,6 +277,7 @@ async function themeIcons([bg, paper, , ink, , title]) {
     --press: cubic-bezier(.16, 1, .3, 1);
   }
   * { box-sizing: border-box; }
+  html { background: var(--bg) radial-gradient(color-mix(in srgb, var(--ink) 12%, transparent) 1px, transparent 1.5px) 50% 0 / 14px 14px; }
   html, body, textarea { overscroll-behavior: none; }
   ::selection { background: var(--accent); color: var(--ink); }
   body {
@@ -285,7 +286,6 @@ async function themeIcons([bg, paper, , ink, , title]) {
     flex-direction: column;
     height: 100dvh;
     padding: 20px 16px 0;
-    background: var(--bg) radial-gradient(color-mix(in srgb, var(--ink) 12%, transparent) 1px, transparent 1.5px) 0 0 / 14px 14px;
     color: var(--ink);
     font: 16px/1.5 var(--text);
     -webkit-tap-highlight-color: transparent;
@@ -372,15 +372,6 @@ async function themeIcons([bg, paper, , ink, , title]) {
     border-top: 2px solid var(--ink);
   }
   .foot .key { flex: 1; flex-direction: column; gap: 3px; min-height: 52px; padding: 6px 2px; font-size: 13px; }
-  .note {
-    width: 100%;
-    max-width: 560px;
-    margin: 12px auto 0;
-    padding: 0 4px;
-    color: var(--ink);
-    font-size: 13px;
-    line-height: 1.6;
-  }
   .toast {
     margin: 0 0 12px;
     padding: 8px 12px;
@@ -401,7 +392,7 @@ async function themeIcons([bg, paper, , ink, , title]) {
   }
   #type { display: none; }
   @media (pointer: coarse) {
-    body:has(textarea:focus) :is(.note, .foot, #copy) { display: none; }
+    body:has(textarea:focus) :is(.foot, #copy) { display: none; }
     body:has(textarea:focus) .dock { padding: 12px 0 0; }
   }
   body:has(textarea[readonly]) #type { display: inline-flex; margin-left: 4px; }
@@ -418,6 +409,22 @@ async function themeIcons([bg, paper, , ink, , title]) {
   #copy:active:not(:disabled) { transform: translate(4px, 4px); }
   #copy:disabled { background: var(--paper-deep); box-shadow: none; }
   #copy.done { background: var(--paper); }
+  @media (orientation: landscape) and (max-height: 500px) {
+    body { display: grid; grid-template: 1fr / 1fr 216px; padding: 8px max(16px, env(safe-area-inset-right)) 14px max(16px, env(safe-area-inset-left)); }
+    .win { grid-column: 1 / -1; grid-row: 1; max-width: none; display: grid; grid-template: auto auto 1fr / 1fr 216px; }
+    .title { grid-column: 1 / -1; }
+    .tools { grid-area: 2 / 1; }
+    textarea { grid-area: 3 / 1; }
+    .foot { grid-area: 2 / 2 / 4 / 3; display: grid; grid-template-columns: 1fr 1fr; align-content: start; border-top: 0; border-left: 2px solid var(--ink); }
+    .dock { display: contents; }
+    .toast, #copy { grid-row: 1; z-index: 1; align-self: end; width: auto; margin: 0 14px 14px; }
+    .toast { grid-column: 1; margin-right: 16px; }
+    #copy { grid-column: 2; font-size: 15px; }
+  }
+  body.cramped { padding-top: 0; padding-bottom: 4px; }
+  body.cramped, body.cramped .win { grid-template-columns: 1fr; }
+  body.cramped :is(.title, .tools, .dock) { display: none; }
+  body.cramped textarea { padding: 3px 14px; line-height: 1.6; }
   @media (max-width: 360px) {
     body { padding: 16px 12px 0; }
     .tools { gap: 6px; padding: 12px 10px 4px; }
@@ -448,7 +455,7 @@ async function themeIcons([bg, paper, , ink, , title]) {
     <button class="key" data-style="s" disabled aria-label="Strikethrough" aria-pressed="false"><s>S</s></button>
     <button class="key" data-style="u" disabled aria-label="Underline" aria-pressed="false"><u>U</u></button>
     <button class="key" data-style="plain" disabled aria-label="Remove formatting"><svg class="ico"><use href="#i-plain"/></svg></button>
-    <button class="key" id="type" aria-label="Type"><svg class="ico"><use href="#i-edit"/></svg></button>
+    <button class="key" id="type" aria-label="Edit text"><svg class="ico"><use href="#i-edit"/></svg></button>
   </div>
   <textarea id="t" aria-label="Post text" placeholder="Type or paste your post, then select text to style it"></textarea>
   <div class="foot">
@@ -458,7 +465,6 @@ async function themeIcons([bg, paper, , ink, , title]) {
     <button class="key" id="spacing" disabled aria-label="Double spacing" aria-pressed="false"><svg class="ico"><use href="#i-spacing"/></svg>Spacing</button>
   </div>
 </main>
-<p class="note">Styles work on A-Z and 0-9 only. Italic skips numbers. Your draft stays on this device.</p>
 <div class="dock">
   <p class="toast" id="toast" role="status" hidden></p>
   <button class="key" id="copy" disabled><svg class="ico"><use href="#i-copy"/></svg><span>Copy post</span></button>
@@ -655,11 +661,14 @@ undoBtn.addEventListener('click', () => {
 
 const vv = window.visualViewport;
 const fitViewport = () => {
+  if (vv.scale > 1.01) return;
   document.body.style.height = vv.height + 'px';
   document.body.style.transform = vv.offsetTop ? `translateY(${vv.offsetTop}px)` : '';
+  document.body.classList.toggle('cramped', vv.height < 240);
 };
 vv?.addEventListener('resize', fitViewport);
 vv?.addEventListener('scroll', fitViewport);
+vv && fitViewport();
 
 if (matchMedia('(pointer: coarse)').matches) {
   const dropSelection = () => {
@@ -671,12 +680,18 @@ if (matchMedia('(pointer: coarse)').matches) {
     t.readOnly = true;
     dropSelection();
   });
+  t.readOnly = !!t.value;
+  sync();
   t.addEventListener('focus', () => {
     if (!t.readOnly) return;
     t.blur();
     dropSelection();
   });
+  const keyboardHandoff = Object.assign(document.createElement('input'), { tabIndex: -1, ariaLabel: 'Post text' });
+  keyboardHandoff.style.cssText = 'position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; font-size: 16px; border: 0; padding: 0';
+  document.body.append(keyboardHandoff);
   document.getElementById('type').addEventListener('click', () => {
+    keyboardHandoff.focus();
     t.readOnly = false;
     t.focus();
   });

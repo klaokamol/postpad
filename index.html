@@ -527,9 +527,10 @@ const lineBreak = /\r\n?|[\n\u2028\u2029\u0085]/;
 const isBlank = line => !line.replace(/[\u2800\u200b-\u200d\u2060\u3164]/g, '').trim();
 
 function spacingOf(s) {
-  const lines = s.split(lineBreak).filter(line => !isBlank(line));
-  const double = lines.join('\n\n');
-  return { count: lines.length, isDouble: lines.length > 1 && s === double, double, single: lines.join('\n') };
+  const all = s.split(lineBreak);
+  const lines = all.filter(line => !isBlank(line));
+  const inner = all.slice(all.findIndex(line => !isBlank(line)), all.findLastIndex(line => !isBlank(line)) + 1);
+  return { count: lines.length, isDouble: lines.length > 1 && inner.some(isBlank), double: lines.join('\n\n'), single: lines.join('\n') };
 }
 
 function keepWhitespace(s) {

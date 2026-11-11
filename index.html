@@ -503,7 +503,11 @@ function styleable(s, kind) {
   return [...s].map(decode).filter(x => x && (kind === 'b' || /[A-Za-z]/.test(x.base)));
 }
 
+// ponytail: only sees the selection, so a selection inside a hashtag that leaves out its # still gets styled; match against the full text if that bites
+const keepPlain = /(https?:\/\/\S+|www\.\S+|#[\p{L}\p{M}\p{N}_]+)/u;
+
 function isOn(s, kind) {
+  s = s.split(keepPlain).filter((_, n) => n % 2 === 0).join('');
   if (MARK[kind]) return s.includes(MARK[kind]);
   const chars = styleable(s, kind);
   return chars.length > 0 && chars.every(x => x[kind]);
@@ -511,12 +515,16 @@ function isOn(s, kind) {
 
 function styleText(s, kind) {
   if (kind === 'plain') return s.normalize('NFKC').replace(/[̶̲]/g, '');
+  const on = !isOn(s, kind);
+  return s.split(keepPlain).map((part, n) => n % 2 ? part : restyle(part, kind, on)).join('');
+}
+
+function restyle(s, kind, on) {
   const mark = MARK[kind];
   if (mark) {
-    if (s.includes(mark)) return s.replaceAll(mark, '');
+    if (!on) return s.replaceAll(mark, '');
     return [...graphemes.segment(s)].map(({ segment: g }) => decode([...g][0]) ? g + mark : g).join('');
   }
-  const on = !isOn(s, kind);
   return [...s].map(ch => {
     const x = decode(ch);
     return x && (kind === 'b' || /[A-Za-z]/.test(x.base)) ? encode({ ...x, [kind]: on }) : ch;
@@ -621,7 +629,7 @@ styleBtns.forEach(btn => {
     const before = value.slice(a, z);
     const out = styleText(before, btn.dataset.style);
     if (out === before) {
-      return say(btn.dataset.style === 'plain' ? 'Already plain text.' : 'Nothing to change here. Styles work on A-Z and 0-9 only, and Italic skips numbers.', btn);
+      return say(btn.dataset.style === 'plain' ? 'Already plain text.' : keepPlain.test(before) ? 'Nothing to change here. Hashtags and links stay plain so they keep working.' : 'Nothing to change here. Styles work on A-Z and 0-9 only, and Italic skips numbers.', btn);
     }
     snapshot();
     t.setRangeText(out, a, z, 'select');

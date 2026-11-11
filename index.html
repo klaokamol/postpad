@@ -523,16 +523,19 @@ function styleText(s, kind) {
   }).join('');
 }
 
+const lineBreak = /\r\n?|[\n\u2028\u2029\u0085]/;
+const isBlank = line => !line.replace(/[\u2800\u200b-\u200d\u2060\u3164]/g, '').trim();
+
 function spacingOf(s) {
-  const lines = s.split('\n').filter(line => line.trim());
+  const lines = s.split(lineBreak).filter(line => !isBlank(line));
   const double = lines.join('\n\n');
   return { count: lines.length, isDouble: lines.length > 1 && s === double, double, single: lines.join('\n') };
 }
 
 function keepWhitespace(s) {
   return s
-    .split('\n')
-    .map(line => line.trim() === '' ? '⠀' : line.replace(/^ +| {2,}/g, m => '⠀'.repeat(m.length)))
+    .split(lineBreak)
+    .map(line => isBlank(line) ? '⠀' : line.replace(/^ +| {2,}/g, m => '⠀'.repeat(m.length)))
     .join('\n');
 }
 

@@ -343,7 +343,7 @@ async function themeIcons([bg, paper, , ink, , title]) {
   }
   .key:active:not(:disabled), .key[aria-pressed="true"] { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
   .key[aria-pressed="true"] { background: var(--accent); }
-  .key:disabled { border-style: dashed; box-shadow: 3px 3px 0 color-mix(in srgb, var(--ink) 18%, transparent); color: var(--ink-soft); cursor: default; }
+  .key:disabled { border-color: var(--ink-soft); background: transparent; box-shadow: none; color: var(--ink-soft); pointer-events: none; }
   .key:focus-visible { outline: 2px dotted var(--ink); outline-offset: -7px; }
   .tools { display: flex; gap: 6px; padding: 14px 14px 4px; }
   .tools .key { flex: 1; min-height: 48px; padding: 0; font-size: 20px; }
@@ -645,12 +645,12 @@ document.addEventListener('selectionchange', sync);
 ['select', 'keyup', 'pointerup', 'focus', 'blur'].forEach(type => t.addEventListener(type, sync));
 document.addEventListener('pointerdown', e => {
   unsay();
-  if (t.readOnly && !e.target.closest('button, textarea')) {
+  if (t.readOnly && !e.target.closest('textarea, .tools, .foot, .dock')) {
     t.setSelectionRange(t.selectionEnd, t.selectionEnd);
     sync();
   }
 });
-document.querySelectorAll('button').forEach(btn => btn.addEventListener('mousedown', e => e.preventDefault()));
+document.querySelectorAll('.tools, .foot, .dock').forEach(el => el.addEventListener('mousedown', e => e.preventDefault()));
 
 styleBtns.forEach(btn => {
   btn.addEventListener('click', () => {

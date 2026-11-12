@@ -726,6 +726,7 @@ const vv = window.visualViewport;
 const restHeights = {};
 const restCards = {};
 const restTexts = {};
+const releaseCard = () => { card.style.minHeight = card.style.maxHeight = t.style.maxHeight = ''; };
 const card = document.querySelector('.win');
 let typingHeights = {};
 try { typingHeights = JSON.parse(localStorage.getItem('typingHeights')) || {}; } catch {}
@@ -786,6 +787,7 @@ if (matchMedia('(pointer: coarse)').matches) {
       document.body.classList.remove('kb-closing');
       fitViewport();
       reveal();
+      releaseCard();
     }, 700);
   });
   const dropSelection = () => {
@@ -810,7 +812,10 @@ if (matchMedia('(pointer: coarse)').matches) {
     requestAnimationFrame(() => requestAnimationFrame(() => {
       reveal.pending = false;
       document.body.classList.remove('kb-hiding');
-      card.style.maxHeight = t.style.maxHeight = '';
+      if (document.body.classList.contains('kb-follow')) {
+        card.style.minHeight = card.style.maxHeight;
+        t.style.maxHeight = '';
+      } else releaseCard();
     }));
   };
   t.addEventListener('blur', () => {
@@ -821,7 +826,10 @@ if (matchMedia('(pointer: coarse)').matches) {
   });
   vv.addEventListener('resize', () => {
     clearTimeout(reveal.settle);
-    if (document.activeElement !== t && vv.height >= reveal.rest - 4) reveal.settle = setTimeout(reveal, 80);
+    if (document.activeElement === t) return;
+    if (vv.height >= reveal.rest - 1 && !document.body.classList.contains('kb-hiding')) releaseCard();
+    if (document.body.classList.contains('kb-follow') && card.offsetHeight >= restCards[Math.round(vv.width)] - 1) reveal();
+    else if (vv.height >= reveal.rest - 4) reveal.settle = setTimeout(reveal, 80);
   });
   let keyboardUp = false;
   vv.addEventListener('resize', () => {
@@ -832,7 +840,7 @@ if (matchMedia('(pointer: coarse)').matches) {
   });
   t.addEventListener('blur', () => { keyboardUp = false; });
   t.addEventListener('focus', () => {
-    card.style.maxHeight = t.style.maxHeight = '';
+    releaseCard();
     document.body.classList.remove('kb-hiding');
     document.body.classList.remove('kb-closing');
     if (!t.readOnly) return;

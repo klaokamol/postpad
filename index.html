@@ -784,12 +784,13 @@ if (matchMedia('(pointer: coarse)').matches) {
   });
   t.readOnly = !!t.value;
   sync();
+  const fixedReveal = new URLSearchParams(location.search).has('fixed');
   const reveal = () => {
     if (!document.body.classList.contains('kb-hiding') || reveal.pending) return;
     reveal.pending = true;
     clearTimeout(fitViewport.timer);
     document.body.classList.remove('kb-closing');
-    fitViewport();
+    if (!fixedReveal) fitViewport();
     requestAnimationFrame(() => requestAnimationFrame(() => {
       reveal.pending = false;
       document.body.classList.remove('kb-hiding');
@@ -800,9 +801,14 @@ if (matchMedia('(pointer: coarse)').matches) {
     if (!rest || vv.scale > 1.01 || vv.height > rest - 100) return;
     reveal.rest = rest;
     document.body.classList.add('kb-hiding');
+    if (fixedReveal) {
+      clearTimeout(reveal.fixed);
+      reveal.fixed = setTimeout(reveal, 450);
+    }
   });
   vv.addEventListener('resize', () => {
     clearTimeout(reveal.settle);
+    if (fixedReveal) return;
     if (document.activeElement !== t && vv.height >= reveal.rest - 4) reveal.settle = setTimeout(reveal, 80);
   });
   let keyboardUp = false;

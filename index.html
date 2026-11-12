@@ -841,6 +841,30 @@ if (matchMedia('(pointer: coarse)').matches) {
   });
 }
 
+if (vv && new URLSearchParams(location.search).has('debug')) {
+  const box = document.createElement('pre');
+  box.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; z-index: 9; margin: 0; padding: 4px; font: 10px/1.3 monospace; background: #000c; color: #0f0; pointer-events: none; white-space: pre-wrap';
+  document.documentElement.append(box);
+  const lines = [];
+  let t0 = performance.now();
+  const snap = e => `${Math.round(performance.now() - t0)} ${e} vv${Math.round(vv.height)} top${Math.round(vv.offsetTop)} in${innerHeight} b${parseInt(document.body.style.height) || 0} st${Math.round(t.scrollTop)} ${document.body.className}`;
+  const log = e => {
+    if (e === 'blur' || e === 'focus') t0 = performance.now();
+    lines.push(snap(e));
+    lines.splice(0, lines.length - 16);
+  };
+  t.addEventListener('focus', () => log('focus'));
+  t.addEventListener('blur', () => log('blur'));
+  vv.addEventListener('resize', () => log('vvR'));
+  vv.addEventListener('scroll', () => log('vvS'));
+  addEventListener('resize', () => log('winR'));
+  new MutationObserver(() => log('body')).observe(document.body, { attributes: true });
+  (function frame() {
+    box.textContent = lines.join('\n') + '\n' + snap('now');
+    requestAnimationFrame(frame);
+  })();
+}
+
 copyBtn.addEventListener('click', async () => {
   const ok = await navigator.clipboard.writeText(keepWhitespace(t.value)).then(() => true, () => false);
   if (!ok) return say("Couldn't copy. Select all the text and copy it by hand.", copyBtn);

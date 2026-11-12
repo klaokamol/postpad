@@ -722,6 +722,8 @@ undoBtn.addEventListener('click', () => {
 
 const vv = window.visualViewport;
 const restHeights = {};
+let typingHeights = {};
+try { typingHeights = JSON.parse(localStorage.getItem('typingHeights')) || {}; } catch {}
 const setHeight = h => {
   document.body.style.height = h + 'px';
   document.body.classList.toggle('cramped', h < 240);
@@ -745,8 +747,13 @@ const revealCaret = () => {
   if (caretBottom > t.scrollTop + t.clientHeight) t.scrollTop = caretBottom - t.clientHeight;
 };
 vv?.addEventListener('resize', () => {
+  t.style.paddingBottom = '';
   fitViewport();
-  if (document.activeElement === t) revealCaret();
+  if (document.activeElement !== t) return;
+  revealCaret();
+  if (t.readOnly) return;
+  typingHeights[Math.round(vv.width)] = t.clientHeight;
+  try { localStorage.setItem('typingHeights', JSON.stringify(typingHeights)); } catch {}
 });
 vv?.addEventListener('scroll', fitViewport);
 vv && fitViewport();
@@ -814,7 +821,8 @@ if (matchMedia('(pointer: coarse)').matches) {
     keyboardHandoff.focus();
     t.readOnly = false;
     t.style.paddingBottom = t.clientHeight + 'px';
-    t.scrollTop = caretBottom - 60;
+    const typingHeight = typingHeights[Math.round(vv.width)];
+    t.scrollTop = typingHeight ? caretBottom - typingHeight : caretBottom - 60;
     t.focus();
   });
 }

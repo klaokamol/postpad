@@ -413,6 +413,8 @@ async function themeIcons([bg, paper, , ink, , title]) {
     #copy { animation-delay: 180ms; }
     body.kb-hiding .foot { translate: 0 100%; animation: none; will-change: translate; }
     body.kb-hiding :is(.foot .key, #copy) { visibility: hidden; animation: none; }
+    body.kb-follow.kb-hiding :is(.foot, #copy) { display: none; }
+    body.kb-follow.kb-hiding .dock { padding: 12px 0 0; }
   }
   @keyframes drawer { from { translate: 0 100%; } }
   @keyframes pop {
@@ -722,6 +724,8 @@ undoBtn.addEventListener('click', () => {
 
 const vv = window.visualViewport;
 const restHeights = {};
+const restCards = {};
+const card = document.querySelector('.win');
 let typingHeights = {};
 try { typingHeights = JSON.parse(localStorage.getItem('typingHeights')) || {}; } catch {}
 const setHeight = h => {
@@ -732,7 +736,10 @@ const fitViewport = () => {
   if (vv.scale > 1.01) return;
   setHeight(vv.height);
   document.body.style.transform = vv.offsetTop ? `translateY(${vv.offsetTop}px)` : '';
-  if (document.activeElement !== t) restHeights[Math.round(vv.width)] = vv.height;
+  if (document.activeElement !== t && !document.body.classList.contains('kb-hiding')) {
+    restHeights[Math.round(vv.width)] = vv.height;
+    restCards[Math.round(vv.width)] = card.offsetHeight;
+  }
 };
 const caretBottomAt = end => {
   const probe = Object.assign(t.cloneNode(), { id: '', value: t.value.slice(0, end) });
@@ -764,7 +771,10 @@ if (matchMedia('(pointer: coarse)').matches) {
     const rest = restHeights[Math.round(vv.width)];
     if (!rest || vv.scale > 1.01) return;
     document.body.classList.add('kb-closing');
-    if (innerHeight > rest - 100) setHeight(rest);
+    const follow = innerHeight <= rest - 100;
+    document.body.classList.toggle('kb-follow', follow);
+    if (follow) card.style.maxHeight = restCards[Math.round(vv.width)] + 'px';
+    else setHeight(rest);
     document.body.style.transform = '';
     clearTimeout(fitViewport.timer);
     fitViewport.timer = setTimeout(() => {
@@ -795,6 +805,7 @@ if (matchMedia('(pointer: coarse)').matches) {
     requestAnimationFrame(() => requestAnimationFrame(() => {
       reveal.pending = false;
       document.body.classList.remove('kb-hiding');
+      card.style.maxHeight = '';
     }));
   };
   t.addEventListener('blur', () => {
@@ -816,6 +827,7 @@ if (matchMedia('(pointer: coarse)').matches) {
   });
   t.addEventListener('blur', () => { keyboardUp = false; });
   t.addEventListener('focus', () => {
+    card.style.maxHeight = '';
     document.body.classList.remove('kb-hiding');
     document.body.classList.remove('kb-closing');
     if (!t.readOnly) return;

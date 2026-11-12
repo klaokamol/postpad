@@ -725,6 +725,7 @@ undoBtn.addEventListener('click', () => {
 const vv = window.visualViewport;
 const restHeights = {};
 const restCards = {};
+const restTexts = {};
 const card = document.querySelector('.win');
 let typingHeights = {};
 try { typingHeights = JSON.parse(localStorage.getItem('typingHeights')) || {}; } catch {}
@@ -739,6 +740,7 @@ const fitViewport = () => {
   if (document.activeElement !== t && !document.body.classList.contains('kb-hiding')) {
     restHeights[Math.round(vv.width)] = vv.height;
     restCards[Math.round(vv.width)] = card.offsetHeight;
+    restTexts[Math.round(vv.width)] = t.offsetHeight;
   }
 };
 const caretBottomAt = end => {
@@ -773,7 +775,10 @@ if (matchMedia('(pointer: coarse)').matches) {
     document.body.classList.add('kb-closing');
     const follow = innerHeight <= rest - 100;
     document.body.classList.toggle('kb-follow', follow);
-    if (follow) card.style.maxHeight = restCards[Math.round(vv.width)] + 'px';
+    if (follow) {
+      card.style.maxHeight = restCards[Math.round(vv.width)] + 'px';
+      t.style.maxHeight = restTexts[Math.round(vv.width)] + 'px';
+    }
     else setHeight(rest);
     document.body.style.transform = '';
     clearTimeout(fitViewport.timer);
@@ -805,7 +810,7 @@ if (matchMedia('(pointer: coarse)').matches) {
     requestAnimationFrame(() => requestAnimationFrame(() => {
       reveal.pending = false;
       document.body.classList.remove('kb-hiding');
-      card.style.maxHeight = '';
+      card.style.maxHeight = t.style.maxHeight = '';
     }));
   };
   t.addEventListener('blur', () => {
@@ -827,7 +832,7 @@ if (matchMedia('(pointer: coarse)').matches) {
   });
   t.addEventListener('blur', () => { keyboardUp = false; });
   t.addEventListener('focus', () => {
-    card.style.maxHeight = '';
+    card.style.maxHeight = t.style.maxHeight = '';
     document.body.classList.remove('kb-hiding');
     document.body.classList.remove('kb-closing');
     if (!t.readOnly) return;

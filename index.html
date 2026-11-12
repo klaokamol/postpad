@@ -751,7 +751,7 @@ vv?.addEventListener('resize', () => {
   fitViewport();
   if (document.activeElement !== t) return;
   revealCaret();
-  if (t.readOnly) return;
+  if (t.readOnly || !(vv.height < restHeights[Math.round(vv.width)] - 100)) return;
   typingHeights[Math.round(vv.width)] = t.clientHeight;
   try { localStorage.setItem('typingHeights', JSON.stringify(typingHeights)); } catch {}
 });
@@ -805,6 +805,14 @@ if (matchMedia('(pointer: coarse)').matches) {
     clearTimeout(reveal.settle);
     if (document.activeElement !== t && vv.height >= reveal.rest - 4) reveal.settle = setTimeout(reveal, 80);
   });
+  let keyboardUp = false;
+  vv.addEventListener('resize', () => {
+    const rest = restHeights[Math.round(vv.width)];
+    if (document.activeElement !== t || !rest) return;
+    if (vv.height < rest - 100) keyboardUp = true;
+    else if (keyboardUp) t.blur();
+  });
+  t.addEventListener('blur', () => { keyboardUp = false; });
   t.addEventListener('focus', () => {
     document.body.classList.remove('kb-hiding');
     document.body.classList.remove('kb-closing');

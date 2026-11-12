@@ -643,8 +643,8 @@ t.addEventListener('input', () => {
 });
 document.addEventListener('selectionchange', sync);
 ['select', 'keyup', 'pointerup', 'focus', 'blur'].forEach(type => t.addEventListener(type, sync));
+document.addEventListener('click', unsay, true);
 document.addEventListener('pointerdown', e => {
-  unsay();
   if (t.readOnly && !e.target.closest('textarea, .tools, .foot, .dock')) {
     t.setSelectionRange(t.selectionEnd, t.selectionEnd);
     sync();
@@ -745,7 +745,6 @@ const revealCaret = () => {
   if (caretBottom > t.scrollTop + t.clientHeight) t.scrollTop = caretBottom - t.clientHeight;
 };
 vv?.addEventListener('resize', () => {
-  t.style.paddingBottom = '';
   fitViewport();
   if (document.activeElement === t) revealCaret();
 });

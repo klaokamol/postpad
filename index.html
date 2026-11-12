@@ -296,6 +296,7 @@ async function themeIcons([bg, paper, , ink, , title]) {
   }
   @media (prefers-reduced-motion: no-preference) {
     body.kb-closing { transition: transform .4s cubic-bezier(.25, .8, .25, 1); }
+    body.grow.kb-closing { transition: transform .4s cubic-bezier(.25, .8, .25, 1), height .35s cubic-bezier(.25, .8, .25, 1); }
   }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -785,6 +786,7 @@ if (matchMedia('(pointer: coarse)').matches) {
   t.readOnly = !!t.value;
   sync();
   const fixedReveal = new URLSearchParams(location.search).has('fixed');
+  document.body.classList.toggle('grow', new URLSearchParams(location.search).has('grow'));
   const reveal = () => {
     if (!document.body.classList.contains('kb-hiding') || reveal.pending) return;
     reveal.pending = true;
@@ -852,6 +854,7 @@ if (vv && new URLSearchParams(location.search).has('debug')) {
     if (e === 'blur' || e === 'focus') t0 = performance.now();
     lines.push(snap(e));
     lines.splice(0, lines.length - 16);
+    if (location.protocol === 'http:') fetch('/log', { method: 'POST', body: lines.at(-1), keepalive: true }).catch(() => {});
   };
   t.addEventListener('focus', () => log('focus'));
   t.addEventListener('blur', () => log('blur'));
